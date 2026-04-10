@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+:root {
+  /* ZenithSpectra Design Tokens */
+  --bg-primary: #0A1628;
+  --bg-secondary: #0F1D32;
+  --bg-glass: rgba(15, 29, 50, 0.6);
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0AEC0;
+  --text-muted: #718096;
+  --accent-gold: #D4A843;
+  --accent-gold-soft: rgba(212, 168, 67, 0.15);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(212, 168, 67, 0.4);
+  --success: #48BB78;
+  --warning: #ECC94B;
+  --danger: #F56565;
+}
+
+@theme inline {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent-gold: var(--accent-gold);
+  --color-accent-gold-soft: var(--accent-gold-soft);
+  --color-border-glass: var(--border-glass);
+  --color-border-active: var(--border-active);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans, Inter, system-ui, sans-serif);
+}
+
+/* Liquid Glass System */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-hover {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.glass-hover:hover {
+  transform: scale(1.02);
+  border-color: var(--border-active);
+}
