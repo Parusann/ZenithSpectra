@@ -5,7 +5,11 @@ import uuid
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
+backend_dir = os.path.join(os.path.dirname(__file__), "..", "backend")
+sys.path.insert(0, backend_dir)
+
+from dotenv import load_dotenv
+load_dotenv(os.path.join(backend_dir, ".env"))
 
 from app.database import async_session, engine, Base
 from app.models.content import Source, SourceType

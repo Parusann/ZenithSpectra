@@ -15,18 +15,17 @@ frontend/.next/
 frontend/out/
 backend/__pycache__/
 
-# IDE
-.vscode/
-.idea/
+# Hidden directories (keep .github)
+.*/
+!.github/
+
+# Editor
 *.swp
 *.swo
 
 # OS
 .DS_Store
 Thumbs.db
-
-# AI tools
-.claude/
 
 # Misc
 *.log
