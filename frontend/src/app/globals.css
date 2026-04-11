@@ -59,3 +59,107 @@ body {
   transform: scale(1.02);
   border-color: var(--border-active);
 }
+
+/* Advanced Glass Card — 3D Tilt + Glare */
+.glass-card {
+  position: relative;
+  background: var(--bg-glass);
+  backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.18),
+    inset -2px -2px 3px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle at var(--mouse-x) var(--mouse-y),
+    rgba(255, 255, 255, 0.25) 0%,
+    transparent 45%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glass-card:hover::before {
+  opacity: 1;
+}
+
+.glass-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+.glass-card-hover {
+  cursor: pointer;
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(212, 168, 67, 0.25);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 0 50px rgba(212, 168, 67, 0.1),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.18),
+    inset -2px -2px 3px rgba(0, 0, 0, 0.12);
+}
+
+.glass-card.tilt-ready {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* Utility glass variants */
+.glass-card-sm {
+  border-radius: 12px;
+}
+
+.glass-card-flat {
+  transform-style: flat;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Selection */
+::selection {
+  background: rgba(212, 168, 67, 0.3);
+  color: #fff;
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
