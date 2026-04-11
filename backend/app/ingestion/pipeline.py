@@ -11,6 +11,8 @@ from app.models.content import Source, ContentItem
 from app.ingestion.fetcher import fetch_feed
 from app.ingestion.parser import clean_content
 from app.ingestion.classifier import classify_category
+from app.services.credibility import score_credibility
+from app.services.trends import calculate_trends
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +60,14 @@ async def run_pipeline() -> dict:
                     cleaned = clean_content(entry.raw_content)
                     category = classify_category(entry.title, cleaned)
 
+                    cred_score, cred_explanation = score_credibility(
+                        source_baseline=source.credibility_baseline,
+                        source_type=source.source_type,
+                        original_url=entry.url,
+                        title=entry.title,
+                        content=cleaned,
+                    )
+
                     item = ContentItem(
                         title=entry.title,
                         original_url=entry.url,
@@ -67,10 +77,8 @@ async def run_pipeline() -> dict:
                         category=category,
                         raw_content=entry.raw_content,
                         cleaned_content=cleaned,
-                        credibility_score=source.credibility_baseline,
-                        credibility_explanation=(
-                            f"Baseline score from {source.name} ({source.source_type.value})"
-                        ),
+                        credibility_score=cred_score,
+                        credibility_explanation=cred_explanation,
                     )
                     session.add(item)
                     existing_urls.add(entry.url)
@@ -83,6 +91,14 @@ async def run_pipeline() -> dict:
             source.last_polled_at = datetime.now(timezone.utc)
 
         await session.commit()
+
+    # Update trending topics after ingestion
+    try:
+        trend_count = await calculate_trends()
+        stats["trends_updated"] = trend_count
+    except Exception:
+        logger.exception("Trend calculation failed")
+        stats["trends_updated"] = 0
 
     elapsed = (datetime.now(timezone.utc) - start).total_seconds()
     logger.info(
