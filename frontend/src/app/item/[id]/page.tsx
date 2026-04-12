@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import type { ContentItemDetail } from "@/lib/api";
+import { PageTransition } from "@/components/MotionWrapper";
 import GlassCard from "@/components/GlassCard";
 import CredibilityBadge from "@/components/CredibilityBadge";
 import ScientificStatusLabel from "@/components/ScientificStatusLabel";
@@ -34,7 +35,7 @@ export default async function ItemDetailPage({ params }: Props) {
     : null;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PageTransition className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-text-muted mb-6">
         <Link href="/" className="hover:text-text-secondary transition-colors">
@@ -170,6 +171,6 @@ export default async function ItemDetailPage({ params }: Props) {
           Back to Feed
         </Link>
       </div>
-    </div>
+    </PageTransition>
   );
 }

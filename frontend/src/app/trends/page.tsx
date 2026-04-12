@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import GlassCard from "@/components/GlassCard";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrapper";
 
 export const revalidate = 120;
 
@@ -12,7 +13,7 @@ export default async function TrendsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <header className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Trending Topics</h1>
         <p className="text-text-secondary">
@@ -21,9 +22,9 @@ export default async function TrendsPage() {
       </header>
 
       {trends.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {trends.map((t, i) => (
-            <GlassCard key={t.id} hover tilt padding="md">
+            <StaggerItem key={t.id}><GlassCard hover tilt padding="md">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -54,14 +55,14 @@ export default async function TrendsPage() {
                   <p className="text-[10px] text-text-muted">velocity</p>
                 </div>
               </div>
-            </GlassCard>
+            </GlassCard></StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       ) : (
         <p className="text-text-muted text-sm">
           No trending topics available yet. Data populates after ingestion runs.
         </p>
       )}
-    </div>
+    </PageTransition>
   );
 }

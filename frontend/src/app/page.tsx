@@ -4,6 +4,7 @@ import ContentItemCard from "@/components/ContentItemCard";
 import TrendChip from "@/components/TrendChip";
 import CategoryChip from "@/components/CategoryChip";
 import GlassCard from "@/components/GlassCard";
+import { PageTransition, ScrollReveal, StaggerContainer, StaggerItem } from "@/components/MotionWrapper";
 
 export const revalidate = 120; // ISR: refresh every 2 minutes
 
@@ -25,7 +26,7 @@ export default async function Home() {
   const feedItems = items.items.slice(featured ? 1 : 0);
 
   return (
-    <div className="min-h-screen">
+    <PageTransition className="min-h-screen">
       {/* Hero */}
       <section className="relative flex items-center justify-center min-h-[60vh] px-4">
         <div className="absolute inset-0 bg-gradient-to-b from-accent-gold/5 via-transparent to-transparent pointer-events-none" />
@@ -58,7 +59,7 @@ export default async function Home() {
 
       {/* Trending Bar */}
       {trends.length > 0 && (
-        <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mb-12">
+        <ScrollReveal><section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mb-12">
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">
               Trending Now
@@ -70,12 +71,12 @@ export default async function Home() {
               <TrendChip key={t.id} name={t.name} velocity={t.velocity} />
             ))}
           </div>
-        </section>
+        </section></ScrollReveal>
       )}
 
       {/* Categories */}
       {categories.length > 0 && (
-        <section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mb-12">
+        <ScrollReveal><section className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto mb-12">
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wider">
               Categories
@@ -87,7 +88,7 @@ export default async function Home() {
               <CategoryChip key={c.slug} slug={c.slug} name={c.name} />
             ))}
           </div>
-        </section>
+        </section></ScrollReveal>
       )}
 
       {/* Featured */}
@@ -117,13 +118,15 @@ export default async function Home() {
             View all
           </Link>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {feedItems.map((item) => (
-            <ContentItemCard key={item.id} item={item} />
+            <StaggerItem key={item.id}>
+              <ContentItemCard item={item} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </section>
-    </div>
+    </PageTransition>
   );
 }
 

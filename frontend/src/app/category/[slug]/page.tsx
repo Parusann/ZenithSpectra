@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { api } from "@/lib/api";
 import ContentItemCard from "@/components/ContentItemCard";
+import { PageTransition, StaggerContainer, StaggerItem } from "@/components/MotionWrapper";
 
 export const revalidate = 120;
 
@@ -40,7 +41,7 @@ export default async function CategoryPage({ params }: Props) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PageTransition className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <header className="mb-8">
         <h1 className="text-3xl font-bold mb-2">{meta.name}</h1>
         <p className="text-text-secondary">{meta.description}</p>
@@ -50,16 +51,18 @@ export default async function CategoryPage({ params }: Props) {
       </header>
 
       {data.items.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.items.map((item) => (
-            <ContentItemCard key={item.id} item={item} />
+            <StaggerItem key={item.id}>
+              <ContentItemCard item={item} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       ) : (
         <p className="text-text-muted text-sm">
           No articles in this category yet.
         </p>
       )}
-    </div>
+    </PageTransition>
   );
 }

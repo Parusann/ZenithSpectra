@@ -163,3 +163,23 @@ html {
   outline: 2px solid var(--accent-gold);
   outline-offset: 2px;
 }
+
+/* Mobile refinements */
+@media (max-width: 640px) {
+  .glass-card {
+    border-radius: 12px;
+  }
+
+  .glass-card::before {
+    display: none;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
