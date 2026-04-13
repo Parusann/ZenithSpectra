@@ -6,13 +6,15 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import async_session
-from app.models.content import Source, ContentItem
+from app.models.content import Source, ContentItem, Category, ScientificStatus
 from app.ingestion.fetcher import fetch_feed
 from app.ingestion.parser import clean_content
 from app.ingestion.classifier import classify_category
 from app.services.credibility import score_credibility
 from app.services.trends import calculate_trends
+from app.llm.service import generate_summary, classify_content, evaluate_credibility
 
 logger = logging.getLogger(__name__)
 
@@ -68,17 +70,61 @@ async def run_pipeline() -> dict:
                         content=cleaned,
                     )
 
+                    # LLM enrichment (optional, gated by config flag)
+                    llm_summary = None
+                    llm_tags = None
+                    llm_status = None
+                    llm_cred_adjustment = 0
+                    llm_category = None
+
+                    if settings.enable_llm_enrichment:
+                        try:
+                            llm_summary = await generate_summary(cleaned, "quick")
+                        except Exception:
+                            logger.warning("LLM summary failed for %s", entry.url)
+
+                        try:
+                            classification = await classify_content(cleaned)
+                            raw_cat = classification.get("category")
+                            raw_status = classification.get("scientific_status")
+                            llm_tags = classification.get("tags", [])
+
+                            if raw_cat:
+                                try:
+                                    llm_category = Category(raw_cat)
+                                except ValueError:
+                                    llm_category = None
+
+                            if raw_status:
+                                try:
+                                    llm_status = ScientificStatus(raw_status)
+                                except ValueError:
+                                    llm_status = None
+                        except Exception:
+                            logger.warning("LLM classification failed for %s", entry.url)
+
+                        try:
+                            cred_result = await evaluate_credibility(cleaned, entry.title)
+                            llm_cred_adjustment = cred_result.get("score_adjustment", 0)
+                        except Exception:
+                            logger.warning("LLM credibility eval failed for %s", entry.url)
+
+                    final_score = max(0, min(100, cred_score + llm_cred_adjustment))
+
                     item = ContentItem(
                         title=entry.title,
                         original_url=entry.url,
                         source_id=source.id,
                         author=entry.author,
                         published_at=entry.published_at,
-                        category=category,
+                        category=llm_category or category,
                         raw_content=entry.raw_content,
                         cleaned_content=cleaned,
-                        credibility_score=cred_score,
+                        credibility_score=final_score,
                         credibility_explanation=cred_explanation,
+                        summary_quick=llm_summary,
+                        scientific_status=llm_status,
+                        tags=llm_tags,
                     )
                     session.add(item)
                     existing_urls.add(entry.url)

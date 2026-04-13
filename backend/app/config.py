@@ -9,13 +9,14 @@ class Settings(BaseSettings):
     llm_provider: str = "ollama"  # "ollama" or "groq"
     groq_api_key: str = ""
     ollama_base_url: str = "http://localhost:11434"
-    llm_model: str = "llama3.1:8b"
+    llm_model: str = "gemma4:31b"
 
     # CORS
     cors_origins: str = "http://localhost:3000"
 
     # Ingestion
     ingestion_interval_hours: int = 6
+    enable_llm_enrichment: bool = False
 
     # App
     app_name: str = "ZenithSpectra"

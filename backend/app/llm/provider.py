@@ -14,7 +14,7 @@ class LLMProvider(ABC):
 class OllamaProvider(LLMProvider):
     def __init__(self):
         import httpx
-        self.client = httpx.AsyncClient(base_url=settings.ollama_base_url, timeout=120.0)
+        self.client = httpx.AsyncClient(base_url=settings.ollama_base_url, timeout=300.0)
         self.model = settings.llm_model
 
     async def generate(self, system_prompt: str, user_prompt: str) -> str:
