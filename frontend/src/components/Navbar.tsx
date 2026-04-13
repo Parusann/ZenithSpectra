@@ -25,23 +25,23 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 ${
         scrolled
-          ? "bg-bg-primary/80 backdrop-blur-xl border-b border-border-glass"
+          ? "bg-bg-primary/70 backdrop-blur-2xl border-b border-border-glass shadow-[0_4px_30px_rgba(0,0,0,0.3)]"
           : "bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span className="text-lg font-semibold text-text-primary">
-              Zenith<span className="text-accent-gold">Spectra</span>
+          <Link href="/" className="flex items-center gap-2 shrink-0 group">
+            <span className="text-lg font-bold text-text-primary tracking-tight">
+              Zenith<span className="text-gradient-gold">Spectra</span>
             </span>
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map((link) => {
               const isActive = link.href === "/"
                 ? pathname === "/"
@@ -50,10 +50,10 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? "text-accent-gold"
-                      : "text-text-secondary hover:text-text-primary"
+                      ? "text-accent-gold bg-accent-gold-soft"
+                      : "text-text-muted hover:text-text-primary hover:bg-white/5"
                   }`}
                 >
                   {link.label}
@@ -64,10 +64,10 @@ export default function Navbar() {
 
           {/* Search + mobile toggle */}
           <div className="flex items-center gap-3">
-            <SearchBar className="hidden sm:block w-56 lg:w-72" />
+            <SearchBar className="hidden sm:block w-52 lg:w-64" />
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 text-text-secondary hover:text-text-primary"
+              className="md:hidden p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"
               aria-label="Toggle menu"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -84,8 +84,8 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-bg-secondary/95 backdrop-blur-xl border-b border-border-glass">
-          <div className="px-4 py-3 space-y-2">
+        <div className="md:hidden bg-bg-secondary/95 backdrop-blur-2xl border-b border-border-glass">
+          <div className="px-4 py-3 space-y-1">
             <SearchBar className="sm:hidden mb-3" />
             {NAV_LINKS.map((link) => {
               const isActive = link.href === "/"
@@ -96,7 +96,7 @@ export default function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`block px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     isActive
                       ? "text-accent-gold bg-accent-gold-soft"
                       : "text-text-secondary hover:text-text-primary hover:bg-white/5"

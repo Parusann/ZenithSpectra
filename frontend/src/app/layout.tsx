@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import GridBackground from "@/components/GridBackground";
+import AmbientOrbs from "@/components/AmbientOrbs";
 import Footer from "@/components/Footer";
 import "./globals.css";
 
@@ -32,6 +33,7 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg-primary text-text-primary font-sans">
+        <AmbientOrbs />
         <GridBackground />
         <Navbar />
         <main className="relative z-10 flex-1 pt-16">{children}</main>
