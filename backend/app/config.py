@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     ingestion_interval_hours: int = 6
     enable_llm_enrichment: bool = False
 
+    # Server
+    host: str = "0.0.0.0"
+    port: int = 8000
+
     # App
     app_name: str = "ZenithSpectra"
     debug: bool = False
