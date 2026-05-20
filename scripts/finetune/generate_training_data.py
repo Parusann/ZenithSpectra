@@ -25,6 +25,15 @@ SYSTEM_PROMPT = (
     "enough information, say so rather than speculating."
 )
 
+QA_SYSTEM_PROMPT = (
+    "You are a science intelligence assistant for ZenithSpectra. "
+    "Answer the user's question based ONLY on the provided article content. "
+    "If the article does not contain enough information to answer, say so clearly. "
+    "Do not speculate or add information from outside the article. "
+    "Cite specific parts of the article when relevant. "
+    "Use clear, accessible language."
+)
+
 
 def make_example(system: str, user: str, model_response: str) -> dict:
     """Create a single training example in Gemma 4 conversational format."""
@@ -42,6 +51,7 @@ SUMMARY_EXAMPLES = [
     make_example(
         SYSTEM_PROMPT,
         "Summarize this science article in 1-2 sentences. Be factual. Do not add interpretation. Use accessible language.\n\n"
+        "Article:\n"
         "NASA's Perseverance rover has detected organic molecules in Jezero Crater rocks that show patterns consistent with biological processes, "
         "according to a study published in Nature. The molecules, found in carbonate-rich samples, contain carbon-hydrogen bonds arranged in ways "
         "that on Earth are typically associated with microbial activity. However, researchers caution that abiotic chemical processes could also "
@@ -52,6 +62,7 @@ SUMMARY_EXAMPLES = [
     make_example(
         SYSTEM_PROMPT,
         "Summarize this science article in 1-2 sentences. Be factual. Do not add interpretation. Use accessible language.\n\n"
+        "Article:\n"
         "Researchers at IBM Quantum have demonstrated a 1,121-qubit processor called Condor that achieved quantum error correction below "
         "the fault-tolerance threshold for the first time in a superconducting system. The breakthrough uses a novel surface code implementation "
         "that reduces physical qubit overhead by 40% compared to previous approaches. This milestone brings practical quantum computing closer "
@@ -63,6 +74,7 @@ SUMMARY_EXAMPLES = [
         SYSTEM_PROMPT,
         "Provide a 2-3 paragraph summary covering: (1) what happened or was discovered, (2) why it matters, "
         "(3) what the source is actually claiming, (4) what remains uncertain or unconfirmed.\n\n"
+        "Article:\n"
         "A team at CERN's LHCb detector has observed an unexpected asymmetry in the decay rates of charm mesons that deviates from "
         "Standard Model predictions by 3.8 sigma. The measurement, based on Run 3 data collected between 2022-2025, shows CP violation "
         "in the charm sector at levels not predicted by current theoretical frameworks. The result has been submitted to Physical Review Letters.",
@@ -83,6 +95,7 @@ EXPLANATION_EXAMPLES = [
         SYSTEM_PROMPT,
         "Explain this development as if talking to a curious non-scientist. Avoid jargon. Use analogies where helpful. "
         "Keep it under 200 words.\n\n"
+        "Article:\n"
         "Scientists have detected gravitational waves from a binary neutron star merger at a distance of 40 megaparsecs, "
         "with an associated kilonova producing heavy elements including gold and platinum through rapid neutron capture.",
         "Imagine two incredibly dense stars — each packing the mass of our Sun into a ball the size of a city — spiraling "
@@ -97,6 +110,7 @@ EXPLANATION_EXAMPLES = [
         SYSTEM_PROMPT,
         "Explain this for someone with basic science literacy (e.g., a university student). Use correct terminology but "
         "define advanced terms. Keep it under 300 words.\n\n"
+        "Article:\n"
         "A quantum computing team has demonstrated logical qubit error rates below 10^-6 using a distance-7 surface code "
         "on a 72-qubit superconducting processor.",
         "A team has achieved a major milestone in quantum error correction by bringing logical qubit error rates below "
@@ -117,6 +131,7 @@ EXPLANATION_EXAMPLES = [
         SYSTEM_PROMPT,
         "Explain this for a researcher or advanced student. Use precise terminology. Reference relevant theories or "
         "prior work. Keep it under 400 words.\n\n"
+        "Article:\n"
         "New observations from the James Webb Space Telescope reveal that galaxies at z > 10 are significantly more "
         "massive than predicted by ΛCDM simulations, with stellar masses exceeding 10^10 solar masses at z ≈ 13.",
         "JWST's NIRCam and NIRSpec observations continue to challenge hierarchical structure formation models. The "
@@ -148,7 +163,7 @@ CREDIBILITY_EXAMPLES = [
         "is acknowledged, whether the headline matches the actual content. Return ONLY a JSON object with "
         "score_adjustment (integer) and explanation (one sentence).\n\n"
         "Headline: Scientists Find Key to Immortality in New Gene Discovery\n\n"
-        "Article: Researchers at Stanford identified a gene variant associated with a 3% increase in lifespan "
+        "Article:\nResearchers at Stanford identified a gene variant associated with a 3% increase in lifespan "
         "in lab mice. The study, published in Cell, involved 200 mice over 2 years. Lead author Dr. Chen noted "
         "the findings are preliminary and may not translate to humans.",
         '{"score_adjustment": -15, "explanation": "Sensationalized headline claims \'immortality\' when the study found only a 3% lifespan increase in mice with clear caveats about human applicability."}'
@@ -160,7 +175,7 @@ CREDIBILITY_EXAMPLES = [
         "is acknowledged, whether the headline matches the actual content. Return ONLY a JSON object with "
         "score_adjustment (integer) and explanation (one sentence).\n\n"
         "Headline: New Measurement Constrains Neutrino Mass Upper Bound\n\n"
-        "Article: The KATRIN experiment has reported a new upper limit on the electron antineutrino mass of "
+        "Article:\nThe KATRIN experiment has reported a new upper limit on the electron antineutrino mass of "
         "0.45 eV at 90% confidence level, improving on their previous result of 0.8 eV. The measurement used "
         "tritium beta decay spectroscopy over a 250-day data collection period. Systematic uncertainties were "
         "carefully characterized, and the team notes that reaching the target sensitivity of 0.2 eV will require "
@@ -174,7 +189,7 @@ CREDIBILITY_EXAMPLES = [
         "is acknowledged, whether the headline matches the actual content. Return ONLY a JSON object with "
         "score_adjustment (integer) and explanation (one sentence).\n\n"
         "Headline: Quantum Computer Solves Problem in Minutes That Would Take Classical Computer Millions of Years\n\n"
-        "Article: Google's latest quantum processor completed a specific random circuit sampling task in 3 minutes "
+        "Article:\nGoogle's latest quantum processor completed a specific random circuit sampling task in 3 minutes "
         "that would take the fastest supercomputer an estimated 47 years. However, the task was specifically designed "
         "to favor quantum processors and has no known practical applications. Independent researchers have suggested "
         "that improved classical algorithms could narrow the gap significantly.",
@@ -190,7 +205,7 @@ CLASSIFICATION_EXAMPLES = [
         "- category: one of \"space\", \"quantum\", \"theoretical\", \"frontier\"\n"
         "- scientific_status: one of \"established\", \"supported\", \"active_research\", \"speculative\", \"highly_speculative\", \"media_hype\"\n"
         "- tags: array of 3-8 topic tag strings\n\n"
-        "Article: ESA's JUICE spacecraft has entered orbit around Jupiter's moon Ganymede, becoming the first spacecraft "
+        "Article:\nESA's JUICE spacecraft has entered orbit around Jupiter's moon Ganymede, becoming the first spacecraft "
         "to orbit a moon other than Earth's. Initial radar measurements confirm the presence of a subsurface ocean beneath "
         "Ganymede's ice shell, consistent with earlier Hubble and Galileo observations. The mission will spend 9 months "
         "characterizing the ocean's depth, salinity, and potential habitability.",
@@ -202,7 +217,7 @@ CLASSIFICATION_EXAMPLES = [
         "- category: one of \"space\", \"quantum\", \"theoretical\", \"frontier\"\n"
         "- scientific_status: one of \"established\", \"supported\", \"active_research\", \"speculative\", \"highly_speculative\", \"media_hype\"\n"
         "- tags: array of 3-8 topic tag strings\n\n"
-        "Article: A new theoretical framework proposes that dark matter consists of primordial black holes formed "
+        "Article:\nA new theoretical framework proposes that dark matter consists of primordial black holes formed "
         "during a first-order phase transition in the early universe. The authors argue this could explain both the "
         "dark matter density and the unexpectedly massive galaxies observed by JWST at high redshift. The paper, "
         "published as a preprint on arXiv, has not yet been peer-reviewed.",
@@ -214,7 +229,7 @@ CLASSIFICATION_EXAMPLES = [
         "- category: one of \"space\", \"quantum\", \"theoretical\", \"frontier\"\n"
         "- scientific_status: one of \"established\", \"supported\", \"active_research\", \"speculative\", \"highly_speculative\", \"media_hype\"\n"
         "- tags: array of 3-8 topic tag strings\n\n"
-        "Article: Microsoft and Quantinuum have announced a breakthrough in topological qubits, demonstrating "
+        "Article:\nMicrosoft and Quantinuum have announced a breakthrough in topological qubits, demonstrating "
         "non-Abelian anyons in a controlled laboratory setting for the first time. The result, published in Nature, "
         "shows that topological qubits have inherently lower error rates than superconducting or trapped-ion alternatives. "
         "However, scaling beyond the current 12-qubit prototype remains an open engineering challenge.",
@@ -225,7 +240,7 @@ CLASSIFICATION_EXAMPLES = [
 # --- Q&A EXAMPLES ---
 QA_EXAMPLES = [
     make_example(
-        SYSTEM_PROMPT,
+        QA_SYSTEM_PROMPT,
         "Article:\nThe Parker Solar Probe completed its closest approach to the Sun, passing within 6.1 million kilometers "
         "of the solar surface at a speed of 635,000 km/h. During the flyby, the probe's WISPR instrument captured "
         "images of coronal structures never seen before, including helical magnetic flux ropes that extend millions "
@@ -239,7 +254,7 @@ QA_EXAMPLES = [
         "are helping to investigate, with newly captured images of helical magnetic flux ropes that may play a role."
     ),
     make_example(
-        SYSTEM_PROMPT,
+        QA_SYSTEM_PROMPT,
         "Article:\nCRISPR-based gene drives have been successfully tested in wild populations of Anopheles gambiae "
         "mosquitoes in Burkina Faso, reducing malaria-carrying mosquito populations by 72% in the test region over "
         "18 months. The trial, conducted by Target Malaria and published in Science, used a suppression drive targeting "
