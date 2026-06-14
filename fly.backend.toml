@@ -1,0 +1,43 @@
+# ZenithSpectra backend (FastAPI) on Fly.io.
+# Deploy from the REPO ROOT (the Dockerfile needs backend/ + scripts/):
+#   fly deploy -c fly.backend.toml
+app = "zenithspectra-backend"
+primary_region = "iad"
+
+[build]
+  dockerfile = "backend/Dockerfile"
+
+# Runs before each release — Alembic is idempotent and safe to re-run.
+# (seed_sources.py is NOT idempotent — run it once by hand, see DEPLOYMENT.md.)
+[deploy]
+  release_command = "alembic upgrade head"
+
+[env]
+  LLM_MODEL = "gemma4:e4b"
+  ENABLE_LLM_ENRICHMENT = "false"
+
+# Set these as secrets (never commit):
+#   fly secrets set \
+#     DATABASE_URL="postgresql+asyncpg://USER:PASS@HOST:5432/zenithspectra" \
+#     OLLAMA_BASE_URL="http://zenithspectra-ollama.internal:11434" \
+#     CORS_ORIGINS="https://zenithspectra-frontend.fly.dev"
+# NOTE: `fly postgres attach` injects DATABASE_URL as postgres:// — you MUST
+# rewrite it to postgresql+asyncpg:// for this app.
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1   # keep one up so the 6-hourly ingest scheduler runs
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "10s"
+    grace_period = "15s"
+    method = "GET"
+    path = "/api/v1/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

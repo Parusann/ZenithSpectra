@@ -1,0 +1,27 @@
+# ZenithSpectra Ollama host (Gemma 4 E4B) on Fly.io — GPU app.
+# Deploy from THIS directory:  cd ollama && fly deploy
+# GPU kinds/regions change often — verify with `fly platform vm-sizes`
+# and https://fly.io/docs/gpus/ before deploying.
+app = "zenithspectra-ollama"
+primary_region = "ord"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  OLLAMA_HOST = "0.0.0.0:11434"   # bind all interfaces so the backend can reach it
+  OLLAMA_MODEL = "gemma4:e4b"
+
+# Persist the pulled model (~9.6 GB) across restarts.
+[mounts]
+  source = "ollama_models"
+  destination = "/root/.ollama"
+
+# No [[services]] block on purpose: the Ollama API is UNAUTHENTICATED, so it is
+# never exposed publicly. The backend reaches it over Fly's private network at
+#   http://zenithspectra-ollama.internal:11434
+# Keep both apps in the same Fly org so 6PN/.internal DNS resolves.
+
+[[vm]]
+  gpu_kind = "a10"    # e.g. a10 | l40s | a100-40gb | a100-80gb — adjust to availability
+  memory = "16gb"

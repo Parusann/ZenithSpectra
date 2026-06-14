@@ -1,0 +1,23 @@
+# ZenithSpectra frontend (Next.js) on Fly.io.
+# Deploy from THIS directory:
+#   cd frontend && fly deploy --build-arg NEXT_PUBLIC_API_URL=https://zenithspectra-backend.fly.dev
+app = "zenithspectra-frontend"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+  # NEXT_PUBLIC_API_URL is inlined at build time. Override per-deploy with
+  # `--build-arg`; this default is the convention-named backend app URL.
+  [build.args]
+    NEXT_PUBLIC_API_URL = "https://zenithspectra-backend.fly.dev"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

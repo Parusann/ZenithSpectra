@@ -1,73 +1,92 @@
 # ZenithSpectra — Deployment
 
-The platform is **Ollama-only** for LLM inference: Gemma 4 (E4B) is the single model
-everywhere (`LLM_MODEL=gemma4:e4b`). There is no third-party LLM API — so any deploy
-that uses LLM enrichment needs a reachable **Ollama host**.
+LLM inference is **Ollama-only**: Gemma 4 (E4B) is the single model everywhere
+(`LLM_MODEL=gemma4:e4b`). There is no third-party LLM API, so any deploy that uses
+LLM enrichment needs a reachable **Ollama host**.
 
 ```
-Vercel (Next.js)  ──HTTP──▶  Backend (FastAPI)  ──┬──▶  Postgres
-                                                  └──▶  Ollama (gemma4:e4b)
+Fly: frontend (Next.js)  ──HTTPS──▶  Fly: backend (FastAPI)  ──┬──▶  Fly Postgres
+                                                               └──▶  Fly: ollama (GPU, .internal)
 ```
 
 `ENABLE_LLM_ENRICHMENT=false` ⇒ the backend never calls Ollama (rule-based credibility +
 trends still populate the feed). Enrichment (AI summaries / multi-level explanations / Q&A)
-requires `ENABLE_LLM_ENRICHMENT=true` **and** a reachable `OLLAMA_BASE_URL`.
+needs `ENABLE_LLM_ENRICHMENT=true` **and** a reachable `OLLAMA_BASE_URL`.
 
 ---
 
-## Option A — Full self-hosted stack (docker-compose)
+## Option A — Local / self-hosted stack (docker-compose)
 
-Brings up Postgres + a self-hosting Ollama service (auto-pulls `gemma4:e4b`) + the backend.
-Best for a VPS/workstation; the Ollama container needs ~10 GB disk for the model and is
-**much** faster with an NVIDIA GPU (uncomment the `deploy.resources` block in the compose file).
+Postgres + a self-hosting Ollama (auto-pulls `gemma4:e4b`) + the backend. Best for a
+workstation/VPS; the Ollama container needs ~10 GB disk and is **much** faster with an
+NVIDIA GPU (uncomment the `deploy.resources` block in `docker-compose.yml`).
 
 ```bash
 docker compose up -d --build
 docker compose exec backend alembic upgrade head                 # run once
 docker compose exec backend python ../scripts/seed_sources.py    # run once (NOT idempotent)
 curl -X POST http://localhost:8000/api/v1/ingest
-# Backend → http://localhost:8000   Ollama → http://localhost:11434
+# Backend → http://localhost:8000 · Ollama → http://localhost:11434
 ```
-
-Enable enrichment by setting `ENABLE_LLM_ENRICHMENT=true` (env or a `.env` beside the compose
-file) and re-creating the backend: `docker compose up -d backend`.
 
 ---
 
-## Option B — Managed (Railway + Vercel) + a hosted Ollama
+## Option B — Fly.io (production)
 
-### 1. Ollama host
-Deploy `ollama/Dockerfile` as its own always-on service. It runs `ollama serve` and pulls
-`gemma4:e4b` on first boot. Options:
-- **Railway**: new service → "Deploy from Dockerfile" → path `ollama/Dockerfile`. Attach a
-  volume at `/root/.ollama` so the model persists across restarts. ⚠️ Railway is CPU-only;
-  `gemma4:e4b` will run but be slow.
-- **Fly.io / RunPod / a GPU VPS**: recommended for usable latency. Expose port `11434`
-  (keep it private to your backend network if possible — it is unauthenticated).
+Four Fly apps in one org (so private `.internal` DNS resolves between them). Configs live
+in this repo and are pre-validated (`fly config validate`).
 
-### 2. Backend → Railway
-- Root dir `backend/` (NIXPACKS uses `backend/requirements.txt` + `railway.toml`).
-- Env vars:
-  - `DATABASE_URL` = Railway Postgres URL **rewritten to `postgresql+asyncpg://…`**.
-  - `OLLAMA_BASE_URL` = your Ollama host's internal URL (e.g. `http://ollama.railway.internal:11434`).
-  - `LLM_MODEL=gemma4:e4b`
-  - `ENABLE_LLM_ENRICHMENT` = `false` for a bare deploy, `true` once the Ollama host is wired.
-  - `CORS_ORIGINS` = your Vercel domain.
-- One-off after first deploy:
-  `railway run alembic upgrade head` → `railway run python scripts/seed_sources.py` →
-  `curl -X POST <railway-url>/api/v1/ingest`.
+### 1. Postgres (managed)
+```bash
+fly postgres create --name zenithspectra-db --region iad
+```
+Attach happens in step 3.
 
-### 3. Frontend → Vercel
-- Root dir `frontend/` (`vercel.json` present).
-- Env: `NEXT_PUBLIC_API_URL = https://<railway-backend-url>`.
-- After deploy, set the backend's `CORS_ORIGINS` to the Vercel domain and redeploy.
+### 2. Ollama host (GPU) — `ollama/fly.toml`
+```bash
+cd ollama
+fly launch --no-deploy --copy-config --name zenithspectra-ollama
+fly volumes create ollama_models --region ord --size 15   # ~9.6 GB model + headroom
+fly deploy
+```
+- GPU requires GPU access on your org; adjust `gpu_kind`/region in `ollama/fly.toml`
+  to what's available (`fly platform vm-sizes`). Railway-style CPU-only also "works" but
+  is slow — a GPU is strongly recommended.
+- The entrypoint pulls `gemma4:e4b` on first boot. **Not exposed publicly** (the API is
+  unauthenticated); the backend reaches it at `http://zenithspectra-ollama.internal:11434`.
+
+### 3. Backend — `fly.backend.toml` (deploy from the REPO ROOT)
+```bash
+fly launch --no-deploy --copy-config -c fly.backend.toml --name zenithspectra-backend
+fly postgres attach zenithspectra-db -a zenithspectra-backend   # injects DATABASE_URL (postgres://)
+
+# Rewrite DATABASE_URL to the async driver, and point at the Ollama app:
+fly secrets set -a zenithspectra-backend \
+  DATABASE_URL="postgresql+asyncpg://<from-attach>" \
+  OLLAMA_BASE_URL="http://zenithspectra-ollama.internal:11434" \
+  CORS_ORIGINS="https://zenithspectra-frontend.fly.dev"
+
+fly deploy -c fly.backend.toml          # release_command runs `alembic upgrade head`
+fly ssh console -a zenithspectra-backend -C "python ../scripts/seed_sources.py"  # once
+curl -X POST https://zenithspectra-backend.fly.dev/api/v1/ingest
+```
+To turn on enrichment later: `fly secrets set -a zenithspectra-backend ENABLE_LLM_ENRICHMENT=true`.
+
+### 4. Frontend — `frontend/fly.toml`
+```bash
+cd frontend
+fly launch --no-deploy --copy-config --name zenithspectra-frontend
+fly deploy --build-arg NEXT_PUBLIC_API_URL=https://zenithspectra-backend.fly.dev
+```
+`NEXT_PUBLIC_API_URL` is baked at build time, so it must be passed as a `--build-arg`.
+After the frontend URL exists, make sure the backend's `CORS_ORIGINS` matches it (step 3).
 
 ---
 
 ## Notes & footguns
 - **asyncpg URL**: the app needs `postgresql+asyncpg://`; Alembic auto-converts to psycopg2
-  for migrations. Railway's default `DATABASE_URL` will **not** include `+asyncpg` — add it.
+  for migrations. `fly postgres attach` injects `postgres://` — you **must** rewrite it.
 - **`seed_sources.py` is not idempotent** — run it exactly once per database.
-- **Model size**: `gemma4:e4b` ≈ 9.6 GB. The Ollama volume must have room; first boot pulls it.
-- **Security**: the Ollama API is unauthenticated. Keep `OLLAMA_BASE_URL` on a private network;
-  do not expose `:11434` publicly.
+- **Model size**: `gemma4:e4b` ≈ 9.6 GB. Size the Ollama volume accordingly; first boot pulls it.
+- **Security**: the Ollama API is unauthenticated. Keep it private (`.internal`); never publish `:11434`.
+- **Migrations**: handled automatically by the backend's `release_command` on each deploy.

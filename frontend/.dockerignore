@@ -1,0 +1,5 @@
+node_modules
+.next
+# Never bake the local API URL into the production image — it is passed as a build arg.
+.env*.local
+npm-debug.log*
