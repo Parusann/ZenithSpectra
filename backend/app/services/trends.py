@@ -5,10 +5,11 @@ tag frequency, mention velocity, and recency.
 """
 
 import logging
+import re
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import async_session
@@ -42,8 +43,6 @@ STOP_WORDS = {
 
 def extract_topics_from_title(title: str) -> list[str]:
     """Extract meaningful multi-word and single-word topics from a title."""
-    import re
-
     title_lower = title.lower()
     topics = []
 
@@ -59,8 +58,9 @@ def extract_topics_from_title(title: str) -> list[str]:
         if phrase in title_lower:
             topics.append(phrase)
 
-    # Single significant words (proper nouns, scientific terms)
-    words = re.findall(r"[A-Za-z][a-z]{2,}", title)
+    # Single significant words (proper nouns, scientific terms, acronyms like NASA/CERN/JWST).
+    # Allow uppercase in positions 2+ so all-caps acronyms are not dropped; .lower() normalizes.
+    words = re.findall(r"[A-Za-z][A-Za-z]{2,}", title)
     for word in words:
         w = word.lower()
         if w not in STOP_WORDS and len(w) > 3:
@@ -123,16 +123,12 @@ async def calculate_trends() -> int:
             logger.info("No significant trending topics found")
             return 0
 
-        # Clear existing trends and rebuild
-        await session.execute(
-            select(TrendingTopic).execution_options(synchronize_session="fetch")
-        )
-        existing = (await session.execute(select(TrendingTopic))).scalars().all()
-        for t in existing:
-            await session.delete(t)
+        # Clear existing trends and rebuild (single bulk delete)
+        await session.execute(delete(TrendingTopic))
 
-        # Create new trending topics
+        # Create new trending topics, accumulating per-item trend scores as we go
         count = 0
+        item_trend_scores: dict = {}
         for topic, mention_7d in significant.most_common(50):
             mention_24h = mentions_24h.get(topic, 0)
             # Velocity: ratio of 24h mentions to 7d average daily rate
@@ -144,6 +140,11 @@ async def calculate_trends() -> int:
             cat_counter = topic_categories.get(topic, Counter())
             primary_cat = cat_counter.most_common(1)[0][0] if cat_counter else "space"
 
+            related_ids = topic_item_ids.get(topic, [])
+            for item_id in related_ids:
+                if trend_score > item_trend_scores.get(item_id, 0):
+                    item_trend_scores[item_id] = trend_score
+
             trending = TrendingTopic(
                 name=topic.title(),
                 category=Category(primary_cat),
@@ -151,10 +152,20 @@ async def calculate_trends() -> int:
                 mention_count_24h=mention_24h,
                 mention_count_7d=mention_7d,
                 velocity=round(velocity, 2),
-                related_item_ids=topic_item_ids.get(topic, [])[:10],
+                related_item_ids=related_ids[:10],
             )
             session.add(trending)
             count += 1
+
+        # Propagate topic scores onto content items so /items?sort=trending and
+        # ContentItemSummary.trend_score are populated. Reset stale scores first.
+        await session.execute(update(ContentItem).values(trend_score=0.0))
+        for item_id, score in item_trend_scores.items():
+            await session.execute(
+                update(ContentItem)
+                .where(ContentItem.id == item_id)
+                .values(trend_score=round(score, 2))
+            )
 
         await session.commit()
         logger.info("Updated %d trending topics", count)

@@ -1,5 +1,5 @@
 # Backend image for the self-hosted / docker-compose stack.
-# (Railway uses NIXPACKS via railway.toml; this Dockerfile is for compose & VPS.)
+# (Fly builds this via fly.backend.toml; also used by docker-compose & VPS.)
 # Build context is the repo ROOT so both backend/ and the root scripts/ are available.
 FROM python:3.12-slim
 

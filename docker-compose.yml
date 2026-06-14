@@ -1,5 +1,5 @@
 # Full self-hosted ZenithSpectra stack: Postgres + Ollama (Gemma 4 E4B) + FastAPI backend.
-# The frontend runs on Vercel (or `npm --prefix frontend run dev`) pointing at http://localhost:8000.
+# The frontend runs on Fly.io (or `npm --prefix frontend run dev`) pointing at http://localhost:8000.
 #
 # Quick start:
 #   docker compose up -d --build

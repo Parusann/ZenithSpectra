@@ -2,8 +2,8 @@ import uuid
 import enum
 from datetime import datetime
 
-from sqlalchemy import String, Text, Integer, Float, Boolean, DateTime, ForeignKey, Enum
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy import String, Text, Integer, Float, Boolean, DateTime, ForeignKey, Enum, Computed
+from sqlalchemy.dialects.postgresql import UUID, ARRAY, TSVECTOR
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -78,6 +78,16 @@ class ContentItem(Base):
     raw_content: Mapped[str | None] = mapped_column(Text)
     cleaned_content: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    # DB-generated full-text search vector (GIN-indexed; not loaded by default).
+    search_vector: Mapped[str | None] = mapped_column(
+        TSVECTOR,
+        Computed(
+            "to_tsvector('english', coalesce(title, '') || ' ' || coalesce(cleaned_content, ''))",
+            persisted=True,
+        ),
+        deferred=True,
+    )
 
     source: Mapped["Source"] = relationship(back_populates="items")
     qa_interactions: Mapped[list["QAInteraction"]] = relationship(back_populates="item")

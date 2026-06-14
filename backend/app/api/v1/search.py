@@ -1,7 +1,7 @@
 """Search API endpoint with PostgreSQL full-text search."""
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func, desc, cast, String
+from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -23,24 +23,18 @@ async def search_items(
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
 ):
-    """Search content items using PostgreSQL full-text search."""
-    # Build tsquery from search terms
+    """Search content items using PostgreSQL full-text search (GIN-indexed)."""
     ts_query = func.plainto_tsquery("english", q)
-    ts_vector = func.to_tsvector(
-        "english",
-        func.coalesce(ContentItem.title, cast("", String)) + " " +
-        func.coalesce(ContentItem.cleaned_content, cast("", String)),
-    )
 
     query = (
         select(ContentItem)
         .options(selectinload(ContentItem.source))
-        .where(ts_vector.op("@@")(ts_query))
+        .where(ContentItem.search_vector.op("@@")(ts_query))
         .where(ContentItem.is_active == True)  # noqa: E712
     )
     count_query = (
         select(func.count(ContentItem.id))
-        .where(ts_vector.op("@@")(ts_query))
+        .where(ContentItem.search_vector.op("@@")(ts_query))
         .where(ContentItem.is_active == True)  # noqa: E712
     )
 
@@ -57,8 +51,8 @@ async def search_items(
         query = query.where(ContentItem.scientific_status == scientific_status.upper())
         count_query = count_query.where(ContentItem.scientific_status == scientific_status.upper())
 
-    # Rank by relevance
-    rank = func.ts_rank(ts_vector, ts_query)
+    # Rank by relevance using the indexed search vector
+    rank = func.ts_rank(ContentItem.search_vector, ts_query)
     query = query.order_by(desc(rank))
 
     total = (await db.execute(count_query)).scalar() or 0

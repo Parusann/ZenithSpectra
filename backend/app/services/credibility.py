@@ -60,7 +60,7 @@ def score_credibility(
 
     # Check for DOI or arxiv links (has linked paper)
     has_paper_link = bool(
-        re.search(r"doi\.org/|arxiv\.org/abs/|arxiv\.org/pdf/", content.lower())
+        re.search(r"doi\.org/|arxiv\.org/abs/|arxiv\.org/pdf/", text)
     )
     if has_paper_link:
         score += 5

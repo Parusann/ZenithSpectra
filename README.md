@@ -6,10 +6,10 @@ AI-powered science intelligence platform that tracks live developments in space 
 
 ## Architecture
 
-- **Frontend**: Next.js 16.2.3 (App Router, TypeScript, Tailwind CSS) — deployed on Vercel
-- **Backend**: FastAPI (Python) — deployed on Railway
-- **Database**: PostgreSQL
-- **AI**: LLM abstraction layer running Gemma 4 (E4B) via Ollama
+- **Frontend**: Next.js 16.2.3 (App Router, TypeScript, Tailwind CSS) — deployed on Fly.io
+- **Backend**: FastAPI (Python) — deployed on Fly.io
+- **Database**: PostgreSQL — managed Fly Postgres
+- **AI**: Gemma 4 (E4B) via Ollama — runs as a separate Fly GPU app (private `.internal`)
 
 ## Project Structure
 
@@ -19,7 +19,7 @@ zenithspectra/
 ├── backend/           # FastAPI app
 ├── docs/              # Documentation
 ├── scripts/           # Utility scripts, seed data
-├── .github/           # CI/CD workflows
+├── *.fly.toml         # Fly.io deploy configs (see DEPLOYMENT.md)
 └── .env.example       # Environment variable template
 ```
 

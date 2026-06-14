@@ -13,7 +13,9 @@ interface ContentItemCardProps {
 }
 
 function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const t = new Date(dateStr).getTime();
+  if (Number.isNaN(t)) return "";
+  const diff = Math.max(0, Date.now() - t);
   const mins = Math.floor(diff / 60000);
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);

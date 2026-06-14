@@ -9,17 +9,17 @@ import HeroSection from "@/components/HeroSection";
 export const revalidate = 120;
 
 export default async function Home() {
-  let items, trends, categories;
+  const [itemsR, trendsR, categoriesR] = await Promise.allSettled([
+    api.getItems({ limit: "12", sort: "ingested_at" }),
+    api.getTrends({ limit: "8" }),
+    api.getCategories(),
+  ]);
 
-  try {
-    [items, trends, categories] = await Promise.all([
-      api.getItems({ limit: "12", sort: "ingested_at" }),
-      api.getTrends({ limit: "8" }),
-      api.getCategories(),
-    ]);
-  } catch {
-    return <HomeFallback />;
-  }
+  // Items drive the feed; trends/categories degrade to empty on partial failure.
+  if (itemsR.status !== "fulfilled") return <HomeFallback />;
+  const items = itemsR.value;
+  const trends = trendsR.status === "fulfilled" ? trendsR.value : [];
+  const categories = categoriesR.status === "fulfilled" ? categoriesR.value : [];
 
   const featured = items.items[0] ?? null;
   const feedItems = items.items.slice(featured ? 1 : 0);

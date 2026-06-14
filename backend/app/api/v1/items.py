@@ -1,5 +1,6 @@
 """Content items API endpoints."""
 
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -18,6 +19,8 @@ from app.api.v1.schemas import (
 )
 
 router = APIRouter(prefix="/items", tags=["items"])
+
+logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=PaginatedResponse)
@@ -58,6 +61,8 @@ async def list_items(
         query = query.order_by(desc(ContentItem.trend_score))
     elif sort == "credibility":
         query = query.order_by(desc(ContentItem.credibility_score))
+    elif sort == "ingested_at":
+        query = query.order_by(desc(ContentItem.ingested_at))
     else:  # newest
         query = query.order_by(desc(ContentItem.published_at))
 
@@ -109,7 +114,14 @@ async def ask_question(
         raise HTTPException(status_code=404, detail="Item not found")
 
     context = item.cleaned_content or item.raw_content or item.title
-    answer = await answer_question(context, body.question)
+    try:
+        answer = await answer_question(context, body.question)
+    except Exception:
+        logger.exception("Q&A failed for item %s", item_id)
+        raise HTTPException(
+            status_code=503,
+            detail="Answering is temporarily unavailable. Please try again later.",
+        )
 
     # Log interaction
     interaction = QAInteraction(

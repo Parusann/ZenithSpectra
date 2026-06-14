@@ -13,7 +13,7 @@ Prerequisites:
 
 Usage:
     python scripts/finetune/export_ollama.py
-    python scripts/finetune/export_ollama.py --quant q5_k_m --import-ollama
+    python scripts/finetune/export_ollama.py --quant q8_0 --import-ollama
 """
 
 import argparse
@@ -28,9 +28,10 @@ def parse_args():
                     help="Path to LoRA adapter directory")
     p.add_argument("--output", default="scripts/finetune/output/export",
                     help="Export output directory")
-    p.add_argument("--quant", default="q4_k_m",
-                    choices=["f16", "q8_0", "q5_k_m", "q4_k_m", "q4_0"],
-                    help="GGUF quantization level")
+    p.add_argument("--quant", default="q8_0",
+                    choices=["f16", "q8_0"],
+                    help="GGUF output type accepted by convert_hf_to_gguf.py. "
+                         "k-quants (q4_k_m/q5_k_m) require a separate llama-quantize step.")
     p.add_argument("--model-name", default="zenithspectra",
                     help="Ollama model name")
     p.add_argument("--llama-cpp", default=None,

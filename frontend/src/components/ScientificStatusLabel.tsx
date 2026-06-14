@@ -1,9 +1,10 @@
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  peer_reviewed: { label: "Peer Reviewed", color: "text-success", bg: "bg-success/10" },
-  preprint: { label: "Preprint", color: "text-warning", bg: "bg-warning/10" },
-  press_release: { label: "Press Release", color: "text-accent-gold", bg: "bg-accent-gold-soft" },
-  news_coverage: { label: "News Coverage", color: "text-text-secondary", bg: "bg-white/5" },
-  editorial: { label: "Editorial", color: "text-text-muted", bg: "bg-white/5" },
+  established: { label: "Established", color: "text-success", bg: "bg-success/10" },
+  supported: { label: "Supported", color: "text-success", bg: "bg-success/10" },
+  active_research: { label: "Active Research", color: "text-accent-gold", bg: "bg-accent-gold-soft" },
+  speculative: { label: "Speculative", color: "text-warning", bg: "bg-warning/10" },
+  highly_speculative: { label: "Highly Speculative", color: "text-warning", bg: "bg-warning/10" },
+  media_hype: { label: "Media Hype", color: "text-text-muted", bg: "bg-white/5" },
 };
 
 interface ScientificStatusLabelProps {
@@ -14,7 +15,7 @@ interface ScientificStatusLabelProps {
 export default function ScientificStatusLabel({ status, className = "" }: ScientificStatusLabelProps) {
   if (!status) return null;
 
-  const config = STATUS_CONFIG[status] ?? {
+  const config = STATUS_CONFIG[status.toLowerCase()] ?? {
     label: status.replace(/_/g, " "),
     color: "text-text-muted",
     bg: "bg-white/5",

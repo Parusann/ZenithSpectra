@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 from app.llm.provider import get_llm_provider
 
@@ -11,6 +12,24 @@ SYSTEM_ROLE = (
     "Only use information from the provided text. "
     "If the text does not contain enough information, say so rather than speculating."
 )
+
+
+def _parse_json_object(raw: str) -> dict | None:
+    """Best-effort parse of a JSON object from an LLM response.
+
+    Handles raw JSON, ```json fenced blocks, and prose-wrapped objects.
+    Returns None if no valid object can be recovered.
+    """
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                return None
+        return None
 
 
 async def generate_summary(text: str, level: str) -> str:
@@ -86,16 +105,24 @@ async def evaluate_credibility(text: str, headline: str) -> dict:
         f"\n\nHeadline: {headline}\n\nArticle:\n{text}"
     )
 
-    raw = await provider.generate(SYSTEM_ROLE, prompt)
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
+    raw = await provider.generate(SYSTEM_ROLE, prompt, json_mode=True)
+    data = _parse_json_object(raw)
+    if data is None:
         logger.warning("LLM returned non-JSON credibility response: %s", raw[:200])
         return {"score_adjustment": 0, "explanation": "Could not evaluate credibility."}
+    try:
+        data["score_adjustment"] = int(data.get("score_adjustment", 0))
+    except (TypeError, ValueError):
+        data["score_adjustment"] = 0
+    return data
 
 
 async def classify_content(text: str) -> dict:
-    """Classify content category, scientific status, and tags."""
+    """Classify content category, scientific status, and tags.
+
+    On failure returns category/scientific_status = None so the caller falls back
+    to its rule-based classification instead of being mislabelled.
+    """
     provider = get_llm_provider()
 
     prompt = (
@@ -107,9 +134,19 @@ async def classify_content(text: str) -> dict:
         f"Article:\n{text}"
     )
 
-    raw = await provider.generate(SYSTEM_ROLE, prompt)
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
+    raw = await provider.generate(SYSTEM_ROLE, prompt, json_mode=True)
+    data = _parse_json_object(raw)
+    if data is None:
         logger.warning("LLM returned non-JSON classification: %s", raw[:200])
-        return {"category": "space", "scientific_status": "active_research", "tags": []}
+        return {"category": None, "scientific_status": None, "tags": []}
+
+    # Normalize tags to a clean list of strings (prevents ARRAY(Text) insert failures).
+    raw_tags = data.get("tags")
+    if isinstance(raw_tags, list):
+        data["tags"] = [
+            str(t).strip() for t in raw_tags
+            if isinstance(t, (str, int, float)) and str(t).strip()
+        ]
+    else:
+        data["tags"] = []
+    return data

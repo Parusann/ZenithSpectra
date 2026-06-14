@@ -1,5 +1,5 @@
 # Self-hostable Ollama service that boots the Gemma 4 E4B model.
-# Deploy this as its own service (Railway/Fly/VPS) or via the root docker-compose.yml,
+# Deploy this as its own service (Fly GPU app / VPS) or via the root docker-compose.yml,
 # then point the backend's OLLAMA_BASE_URL at it.
 FROM ollama/ollama:latest
 
