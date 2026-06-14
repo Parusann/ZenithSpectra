@@ -1,0 +1,13 @@
+# Keep the Docker build context lean and secret-free.
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+.git
+.github
+frontend
+**/.env
+**/.env.local
+*.md
+docs

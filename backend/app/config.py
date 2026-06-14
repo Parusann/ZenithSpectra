@@ -5,9 +5,7 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://localhost:5432/zenithspectra"
 
-    # LLM
-    llm_provider: str = "ollama"  # "ollama" or "groq"
-    groq_api_key: str = ""
+    # LLM — Gemma 4 (E4B) served via Ollama
     ollama_base_url: str = "http://localhost:11434"
     # Model tag — must be pulled in Ollama (`ollama pull gemma4:e4b`)
     llm_model: str = "gemma4:e4b"
