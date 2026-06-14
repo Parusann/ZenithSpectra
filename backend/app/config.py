@@ -9,7 +9,11 @@ class Settings(BaseSettings):
     llm_provider: str = "ollama"  # "ollama" or "groq"
     groq_api_key: str = ""
     ollama_base_url: str = "http://localhost:11434"
+    # Ollama (local dev) model tag — must be pulled locally
     llm_model: str = "gemma4:31b"
+    # Groq (production) model id — MUST be a current Groq-supported model.
+    # Verify at https://console.groq.com/docs/models before deploying.
+    groq_model: str = "llama-3.1-8b-instant"
 
     # CORS
     cors_origins: str = "http://localhost:3000"

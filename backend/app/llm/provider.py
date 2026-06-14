@@ -38,7 +38,7 @@ class GroqProvider(LLMProvider):
             headers={"Authorization": f"Bearer {settings.groq_api_key}"},
             timeout=60.0,
         )
-        self.model = settings.llm_model
+        self.model = settings.groq_model
 
     async def generate(self, system_prompt: str, user_prompt: str) -> str:
         response = await self.client.post("/chat/completions", json={

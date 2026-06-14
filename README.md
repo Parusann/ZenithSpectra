@@ -6,7 +6,7 @@ AI-powered science intelligence platform that tracks live developments in space 
 
 ## Architecture
 
-- **Frontend**: Next.js 14+ (App Router, TypeScript, Tailwind CSS) — deployed on Vercel
+- **Frontend**: Next.js 16.2.3 (App Router, TypeScript, Tailwind CSS) — deployed on Vercel
 - **Backend**: FastAPI (Python) — deployed on Railway
 - **Database**: PostgreSQL
 - **AI**: LLM abstraction layer supporting Ollama (local dev) and Groq (production)
