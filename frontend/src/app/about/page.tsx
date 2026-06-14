@@ -60,7 +60,7 @@ export default function AboutPage() {
               {[
                 { label: "Frontend", value: "Next.js, TypeScript, Tailwind CSS" },
                 { label: "Backend", value: "FastAPI, SQLAlchemy, PostgreSQL" },
-                { label: "AI", value: "Ollama / Groq LLM Providers" },
+                { label: "AI", value: "Gemma 4 E4B via Ollama" },
                 { label: "Data", value: "RSS Ingestion, Full-Text Search" },
               ].map((item) => (
                 <div key={item.label}>
